@@ -1,4 +1,4 @@
-import { log } from "console";
+
 import foodmodel from "../Models/foodModels.js";
 import fs from 'fs'
 
