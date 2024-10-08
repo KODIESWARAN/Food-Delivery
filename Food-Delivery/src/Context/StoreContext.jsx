@@ -1,5 +1,7 @@
 import { createContext, useEffect, useState } from "react";
-import { food_list } from "../assets/assets";
+import axios from 'axios'
+
+
 
 
 export const Storecontext = createContext(null)
@@ -7,16 +9,32 @@ export const Storecontext = createContext(null)
 const StoreContextProvider = (props) =>{
 
     const[cartitems , setCartitems] = useState({});
+    const Url = "http://localhost:3000"
+    const [token , setToken] = useState("");
+    const [food_list,setFood_list] = useState([])
 
-    const addTocart = (itemId) =>{
+    const addTocart = async(itemId) =>{
         if(!cartitems[itemId] ){
             setCartitems((prev) => ({...prev,[itemId]:1}))
         }else{
             setCartitems((prev)=>({...prev,[itemId]:prev[itemId]+1}))
         }
+        if (token) {
+            await  axios.post(Url+"/api/adder",{itemId},{headers:{token}})
+            
+        }
     }
-    const removeTocart = (itemId) =>{
+    const removeTocart =  async (itemId) =>{
             setCartitems((prev)=> ({prev,[itemId]:prev[itemId]-1}))
+            if (token) {
+                 await axios.post(Url+"/api/removed",{itemId},{headers:{token}})
+                
+            }
+    }
+
+    const getcart = async(token) =>{
+        const response = await axios.post(Url+"/api/get",{},{headers:{token}})
+        setCartitems(response.data.cartData)
     }
 
     const TotalcartItems = () => {
@@ -31,6 +49,27 @@ const StoreContextProvider = (props) =>{
         return totalamount;
     }
 
+
+        const fetchFoodlist = async() => {
+            const response = await axios.get(Url+"/api/list")
+            setFood_list(response.data.data)
+        }
+
+    useEffect(() => {
+
+            async function loadData() {
+                await fetchFoodlist();
+                if (localStorage.getItem("token")) {
+                    setToken(localStorage.getItem("token"));
+                    await getcart(localStorage.getItem("token"))
+
+                
+            }
+            
+        }
+        loadData();
+    },[])
+
     const contextValue = {
 
     food_list,
@@ -38,7 +77,10 @@ const StoreContextProvider = (props) =>{
     setCartitems,
     addTocart,
     removeTocart,
-    TotalcartItems
+    TotalcartItems,
+    Url,
+    token,
+    setToken
     
     }
     return (
